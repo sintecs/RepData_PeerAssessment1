@@ -15,9 +15,13 @@ download.file(sourceDataURL, temp, method = "libcurl")
 activity.data <- read.csv("activity.csv", colClasses = c("numeric", "character", "numeric"))
 ## Make real dates
 activity.data[, "date"] <- as.Date(activity.data[, "date"], "%Y-%m-%d")
-## summarize data
+## Summarize data
+## Total steps by day
 total.daily.steps <- aggregate(activity.data[, "steps"], by = list(activity.data[, "date"]), FUN = sum, na.rm = TRUE)
 colnames(total.daily.steps) <- c("date", "daily.steps")
+## Mean steps by interval
+total.interval.steps <- aggregate(activity.data[, "steps"], by = list(activity.data[, "interval"]), FUN = mean, na.rm = TRUE)
+colnames(total.interval.steps) <- c("interval", "mean.steps")
 ```
 ### Summary of the data read in
 
@@ -40,7 +44,8 @@ summary(activity.data)
 ### Histogram of the number of steps daily
 
 ```r
-hist( total.daily.steps[, "daily.steps"]
+hist( 
+      total.daily.steps[, "daily.steps"]
      ,xlab = "Steps Per Day"
      ,ylab = "Frequency"
      ,breaks = 10
@@ -68,10 +73,36 @@ median(total.daily.steps[, "daily.steps"])
 ## [1] 10395
 ```
 
+The mean is 9354.2295082 and the median is 1.0395\times 10^{4}
+
 ## What is the average daily activity pattern?
 
+Time series plot of interval activity
 
+```r
+plot(
+      total.interval.steps[, "interval"]
+     ,total.interval.steps[, "mean.steps"]
+     ,type = "l"
+     ,xlab = "Interval"
+     ,ylab = "Average Number of Steps"
+     ,main = "Average Daily Activity Pattern Averaged Across Days (na removed)"
+    )
+```
 
+![](PA1_template_files/figure-html/time series plot-1.png) 
+
+### What is the interval that contains the greatest average steps?
+
+```r
+ordered.total.interval.steps <- total.interval.steps[order(-total.interval.steps$mean.steps), ]
+head(ordered.total.interval.steps, 1)
+```
+
+```
+##     interval mean.steps
+## 104      835   206.1698
+```
 ## Imputing missing values
 
 

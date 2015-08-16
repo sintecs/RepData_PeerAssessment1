@@ -72,7 +72,71 @@ ordered.total.interval.steps <- total.interval.steps[order(-total.interval.steps
 head(ordered.total.interval.steps, 1)
 ```
 ## Imputing missing values
+1. Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with NAs)
+2. Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.
+3. Create a new dataset that is equal to the original dataset but with the missing data filled in.
+4. Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
 
+### 1.) Calculate the number of rows with na for steps
+```{r na steps count}
+sum(is.na(activity.data[, "steps"]))
+```
 
+### 2.) Devise a strategy to replace na values in the dataset
+1. A first thought of strategy could be to put zeros (0) for all na values.  However, this isn't much better than omitting na values and would skew averages  
+2. A better strategy is to replace the na value for an interval with the mean value for all days with that interval  
+3. Any remaining na values will be set to zeros (0) since we don't have an average for that interval
+
+### 3.) Create a new dataset equal to the original dataset but with all the missing data filled in
+```{r na replacement}
+## We already calculated the average steps per interval, summarize it again here for a reminder of the data
+summary(total.interval.steps)
+## Given an index, if x row contains na for steps, lookup the mean.steps value
+## otherwise return x row steps
+replace.with.avg.steps <- function(index, x, mean.steps){
+  if(is.na(x[index, "steps"])){
+     mean.steps[mean.steps[, "interval"] == x[index, "interval"], "mean.steps"]
+  } else {
+    x[index, "steps"]
+  }
+}
+## Move the data to a new variable and cleanup na values
+imput.activity.data <- activity.data
+imput.activity.data[, "steps"] <- sapply(
+                                          1:length(imput.activity.data[, "steps"])
+                                         ,FUN = replace.with.avg.steps
+                                         ,x = imput.activity.data
+                                         ,mean.steps = total.interval.steps
+                                        )
+## Summary of imput data
+summary(imput.activity.data)
+```
+### 4.) Make a histogram with the imputted data, calculate mean and median...any difference to the earlier data when na values were removed?
+
+## What is mean total number of steps taken per day?
+### Histogram of the number of steps daily
+```{r mean steps per day histogram (imputted data)}
+total.imput.daily.steps <- aggregate(imput.activity.data[, "steps"], by = list(imput.activity.data[, "date"]), FUN = sum)
+colnames(total.imput.daily.steps) <- c("date", "daily.steps")
+
+hist( 
+      total.imput.daily.steps[, "daily.steps"]
+     ,xlab = "Steps Per Day"
+     ,ylab = "Frequency"
+     ,breaks = 10
+     ,main = "Histogram of Total Daily Steps (na replaced with mean for interval)"
+    )
+```
+
+### Mean and Median daily steps
+```{r mean and median (imputted data)}
+mean(total.imput.daily.steps[, "daily.steps"])
+median(total.imput.daily.steps[, "daily.steps"])
+```
+The mean is `r mean(total.imput.daily.steps[, "daily.steps"])` and the median is `r median(total.imput.daily.steps[, "daily.steps"])`
+
+Yes, there is quite a difference in the mean and median now that we filled in the average value for that interval instead of ignoring the row.  We now have more data points in the average and median and both have risen: old mean: `r mean(total.daily.steps[, "daily.steps"])` new mean: `r mean(total.imput.daily.steps[, "daily.steps"])` old median: `r median(total.daily.steps[, "daily.steps"])` new median: `r median(total.imput.daily.steps[, "daily.steps"])` or a difference of around 1400 higher for the mean and 370 higher for the median
+
+The impact after observing the histograms is that our frequencies of steps shifted toward the middle as now that we are putting the average data in observations that were previously na values we have more data in our buckets and naturally they tend to be in the middle of the histogram because we filled it with average data instead of ignoring the observation.
 
 ## Are there differences in activity patterns between weekdays and weekends?

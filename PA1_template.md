@@ -213,6 +213,65 @@ The mean is 1.0766189\times 10^{4} and the median is 1.0766189\times 10^{4}
 
 Yes, there is quite a difference in the mean and median now that we filled in the average value for that interval instead of ignoring the row.  We now have more data points in the average and median and both have risen: old mean: 9354.2295082 new mean: 1.0766189\times 10^{4} old median: 1.0395\times 10^{4} new median: 1.0766189\times 10^{4} or a difference of around 1400 higher for the mean and 370 higher for the median
 
-The impact after observing the histograms is that our frequencies of steps 
+The impact after observing the histograms is that our frequencies of steps shifted toward the middle as now that we are putting the average data in observations that were previously na values we have more data in our buckets and naturally they tend to be in the middle of the histogram because we filled it with average data instead of ignoring the observation.
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+```r
+library(dplyr)
+```
+
+```
+## 
+## Attaching package: 'dplyr'
+## 
+## The following objects are masked from 'package:stats':
+## 
+##     filter, lag
+## 
+## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union
+```
+
+```r
+library(timeDate)
+## Mutate the data to add wee.part
+imput.activity.data <- mutate(imput.activity.data, week.part = isWeekday(date))
+## Create a factor out of the data added
+imput.activity.data[, "week.part"] <- factor(imput.activity.data[, "week.part"], levels = c(FALSE, TRUE), labels = c("weekend", "weekday"))
+## Show the new summary
+summary(imput.activity.data)
+```
+
+```
+##      steps             date               interval        week.part    
+##  Min.   :  0.00   Min.   :2012-10-01   Min.   :   0.0   weekend: 4608  
+##  1st Qu.:  0.00   1st Qu.:2012-10-16   1st Qu.: 588.8   weekday:12960  
+##  Median :  0.00   Median :2012-10-31   Median :1177.5                  
+##  Mean   : 37.38   Mean   :2012-10-31   Mean   :1177.5                  
+##  3rd Qu.: 27.00   3rd Qu.:2012-11-15   3rd Qu.:1766.2                  
+##  Max.   :806.00   Max.   :2012-11-30   Max.   :2355.0
+```
+
+```r
+## Mean steps by interval
+total.imput.activity.data <- aggregate(imput.activity.data[, "steps"], by = list(imput.activity.data[, "interval"], imput.activity.data[, "week.part"]), FUN = mean)
+colnames(total.imput.activity.data) <- c("interval", "week.part", "mean.steps")
+```
+
+
+```r
+library(lattice)
+xyplot(
+      mean.steps ~ interval | factor(week.part)
+     ,total.imput.activity.data
+     ,type = "l"
+     ,xlab = "Interval"
+     ,ylab = "Average Number of Steps"
+     ,main = "Average Daily Activity Pattern Averaged Across Days (na replaced with mean for interval)"
+     ,layout = c(1, 2)
+    )
+```
+
+![](PA1_template_files/figure-html/panel plot-1.png) 

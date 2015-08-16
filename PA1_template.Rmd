@@ -140,3 +140,29 @@ Yes, there is quite a difference in the mean and median now that we filled in th
 The impact after observing the histograms is that our frequencies of steps shifted toward the middle as now that we are putting the average data in observations that were previously na values we have more data in our buckets and naturally they tend to be in the middle of the histogram because we filled it with average data instead of ignoring the observation.
 
 ## Are there differences in activity patterns between weekdays and weekends?
+```{r add weekday/weekend indicator}
+library(dplyr)
+library(timeDate)
+## Mutate the data to add wee.part
+imput.activity.data <- mutate(imput.activity.data, week.part = isWeekday(date))
+## Create a factor out of the data added
+imput.activity.data[, "week.part"] <- factor(imput.activity.data[, "week.part"], levels = c(FALSE, TRUE), labels = c("weekend", "weekday"))
+## Show the new summary
+summary(imput.activity.data)
+## Mean steps by interval
+total.imput.activity.data <- aggregate(imput.activity.data[, "steps"], by = list(imput.activity.data[, "interval"], imput.activity.data[, "week.part"]), FUN = mean)
+colnames(total.imput.activity.data) <- c("interval", "week.part", "mean.steps")
+```
+
+```{r panel plot}
+library(lattice)
+xyplot(
+      mean.steps ~ interval | factor(week.part)
+     ,total.imput.activity.data
+     ,type = "l"
+     ,xlab = "Interval"
+     ,ylab = "Average Number of Steps"
+     ,main = "Average Daily Activity Pattern Averaged Across Days (na replaced with mean for interval)"
+     ,layout = c(1, 2)
+    )
+```
